@@ -85,3 +85,40 @@ func (q *Queries) GetMovie(ctx context.Context, id uuid.UUID) (Movie, error) {
 	)
 	return i, err
 }
+
+const getMovies = `-- name: GetMovies :many
+SELECT id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url FROM movies
+ORDER BY title ASC
+`
+
+func (q *Queries) GetMovies(ctx context.Context) ([]Movie, error) {
+	rows, err := q.db.QueryContext(ctx, getMovies)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Movie
+	for rows.Next() {
+		var i Movie
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.Description,
+			&i.DurationMinutes,
+			&i.PosterImageUrl,
+			&i.TrailerVideoUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

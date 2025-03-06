@@ -38,19 +38,19 @@ func (cfg *apiConfig) handlerBookingsCreate(w http.ResponseWriter, r *http.Reque
 
 	// Validate request data
 	if params.UserID == uuid.Nil || params.MovieID == uuid.Nil || params.SeatNumber == "" {
-		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "Missing required fields", err)
 		return
 	}
 
 	user, err := cfg.db.GetUser(r.Context(), params.UserID)
 	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
+		respondWithError(w, http.StatusNotFound, "User not found", err)
 		return
 	}
 
 	movie, err := cfg.db.GetMovie(r.Context(), params.MovieID)
 	if err != nil {
-		http.Error(w, "Movie not found", http.StatusNotFound)
+		respondWithError(w, http.StatusNotFound, "Movie not found", err)
 		return
 	}
 

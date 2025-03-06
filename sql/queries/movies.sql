@@ -24,3 +24,7 @@ RETURNING *;
 Select *
 FROM movies
 WHERE id = $1;
+
+-- name: GetMovies :many
+SELECT * FROM movies
+ORDER BY title ASC;
