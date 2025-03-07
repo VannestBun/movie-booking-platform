@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
 	"sync/atomic"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/vannestbun/movie-booking/internal/database"
@@ -16,10 +19,12 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	jwtSecret      string
+	s3Client       *s3.Client
+	s3Bucket       string
+	s3Region       string
 }
 
 func main() {
-	const filepathRoot = "."
 	const port = "8080"
 
 	godotenv.Load()
@@ -39,15 +44,32 @@ func main() {
 		log.Fatal("JWT_SECRET environment variable is not set")
 	}
 
+	s3Bucket := os.Getenv("S3_BUCKET")
+	if s3Bucket == "" {
+		log.Fatal("S3_BUCKET environment variable is not set")
+	}
+
+	s3Region := os.Getenv("S3_REGION")
+	if s3Region == "" {
+		log.Fatal("S3_REGION environment variable is not set")
+	}
+
+	awsCfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	client := s3.NewFromConfig(awsCfg)
+
 	apiCfg := apiConfig{
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 		jwtSecret:      jwtSecret,
+		s3Client:       client,
+		s3Bucket:       s3Bucket,
+		s3Region:       s3Region,
 	}
 
 	mux := http.NewServeMux()
-	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
-	mux.Handle("/app/", fsHandler)
 
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 
@@ -66,7 +88,9 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 
-	fs := http.FileServer(http.Dir("./frontend"))
+	// ------- FRONT END ROUTE -------
+
+	fs := apiCfg.middlewareMetricsInc(http.FileServer(http.Dir("./frontend")))
 	mux.Handle("/", fs)
 
 	srv := &http.Server{

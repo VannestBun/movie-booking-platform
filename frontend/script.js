@@ -38,11 +38,11 @@ function showError(message) {
 function createMovieCard(movie) {
     const movieCard = document.createElement('div');
     movieCard.className = 'movie-card';
-    
+    console.log(movie)
     // Create image placeholder
     let imageContent = '';
-    if (movie.poster_url) {
-        imageContent = `<img src="${movie.poster_url}" alt="${movie.title}" class="movie-image">`;
+    if (movie.poster_image_url) {
+        imageContent = `<img src="${movie.poster_image_url}" alt="${movie.title}" class="movie-image">`;
     } else {
         imageContent = `<div class="movie-image placeholder">No Image Available</div>`;
     }
