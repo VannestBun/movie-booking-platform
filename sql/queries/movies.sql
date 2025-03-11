@@ -28,3 +28,12 @@ WHERE id = $1;
 -- name: GetMovies :many
 SELECT * FROM movies
 ORDER BY title ASC;
+
+-- name: DeleteMovie :exec
+DELETE FROM movies
+WHERE id = $1;
+
+-- name: UpdateMovie :exec
+UPDATE movies
+SET title = $1, description = $2, duration_minutes = $3, poster_image_url = $4, trailer_video_url = $5
+WHERE id = $6;

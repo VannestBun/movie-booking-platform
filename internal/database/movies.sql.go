@@ -64,6 +64,16 @@ func (q *Queries) CreateMovie(ctx context.Context, arg CreateMovieParams) (Movie
 	return i, err
 }
 
+const deleteMovie = `-- name: DeleteMovie :exec
+DELETE FROM movies
+WHERE id = $1
+`
+
+func (q *Queries) DeleteMovie(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteMovie, id)
+	return err
+}
+
 const getMovie = `-- name: GetMovie :one
 Select id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url
 FROM movies
@@ -121,4 +131,31 @@ func (q *Queries) GetMovies(ctx context.Context) ([]Movie, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateMovie = `-- name: UpdateMovie :exec
+UPDATE movies
+SET title = $1, description = $2, duration_minutes = $3, poster_image_url = $4, trailer_video_url = $5
+WHERE id = $6
+`
+
+type UpdateMovieParams struct {
+	Title           string
+	Description     string
+	DurationMinutes int32
+	PosterImageUrl  string
+	TrailerVideoUrl string
+	ID              uuid.UUID
+}
+
+func (q *Queries) UpdateMovie(ctx context.Context, arg UpdateMovieParams) error {
+	_, err := q.db.ExecContext(ctx, updateMovie,
+		arg.Title,
+		arg.Description,
+		arg.DurationMinutes,
+		arg.PosterImageUrl,
+		arg.TrailerVideoUrl,
+		arg.ID,
+	)
+	return err
 }
