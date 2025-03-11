@@ -108,6 +108,34 @@ CineVault is a full-stack movie booking application built with Go and vanilla Ja
 
 7. **Access the application at** `http://localhost:8080`
 
+## Contributing
+
+We welcome contributions to CineVault! To contribute, follow these steps:
+
+1. **Fork the repository** on GitHub.
+2. **Clone your fork** to your local machine:
+   ```sh
+   git clone https://github.com/your-username/movie-booking-platform.git
+   ```
+3. **Create a new branch** for your feature or bug fix:
+   ```sh
+   git checkout -b feature-name
+   ```
+4. **Make your changes** and commit them with a meaningful message:
+   ```sh
+   git commit -m "Added new feature X"
+   ```
+5. **Push your changes** to your fork:
+   ```sh
+   git push origin feature-name
+   ```
+6. **Submit a pull request** from your fork to the main repository.
+
+Before submitting a pull request, ensure:
+- Your code follows the project's style guidelines.
+- You have tested your changes locally.
+- Your commit messages are descriptive.
+
 ## Future Enhancements
 
 - Payment gateway integration
