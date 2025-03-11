@@ -115,7 +115,7 @@ We welcome contributions to CineVault! To contribute, follow these steps:
 1. **Fork the repository** on GitHub.
 2. **Clone your fork** to your local machine:
    ```sh
-   git clone https://github.com/your-username/movie-booking-platform.git
+   git clone https://github.com/vannestbun/movie-booking-platform.git
    ```
 3. **Create a new branch** for your feature or bug fix:
    ```sh
