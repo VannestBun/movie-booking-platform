@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -14,6 +15,16 @@ func (cfg *apiConfig) handlerMoviesUpdate(w http.ResponseWriter, r *http.Request
 	movieID, err := uuid.Parse(movieIDString)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid movie ID", err)
+		return
+	}
+
+	currentMovie, err := cfg.db.GetMovie(r.Context(), movieID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Movie not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to fetch current movie", http.StatusInternalServerError)
 		return
 	}
 
@@ -31,13 +42,27 @@ func (cfg *apiConfig) handlerMoviesUpdate(w http.ResponseWriter, r *http.Request
 
 	err = cfg.db.UpdateMovie(r.Context(), database.UpdateMovieParams{
 		ID:              movieID,
-		Title:           updateData.Title,
-		Description:     updateData.Description,
-		DurationMinutes: updateData.DurationMinutes,
-		PosterImageUrl:  updateData.PosterImageUrl,
-		TrailerVideoUrl: updateData.TrailerVideoUrl,
+		Title:           ifEmptyUse(updateData.Title, currentMovie.Title),
+		Description:     ifEmptyUse(updateData.Description, currentMovie.Description),
+		DurationMinutes: ifZeroUse(updateData.DurationMinutes, currentMovie.DurationMinutes),
+		PosterImageUrl:  ifEmptyUse(updateData.PosterImageUrl, currentMovie.PosterImageUrl),
+		TrailerVideoUrl: ifEmptyUse(updateData.TrailerVideoUrl, currentMovie.TrailerVideoUrl),
 	})
 
 	w.WriteHeader(http.StatusNoContent)
 
+}
+
+func ifEmptyUse(newValue, currentValue string) string {
+    if newValue == "" {
+        return currentValue
+    }
+    return newValue
+}
+
+func ifZeroUse(newValue, currentValue int32) int32 {
+    if newValue == 0 {
+        return currentValue
+    }
+    return newValue
 }
