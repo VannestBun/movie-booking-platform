@@ -34,14 +34,6 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 	// Set upload limit
 	r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB limit for images
 
-	// type parameters struct {
-	// 	Title           string `json:"title"`
-	// 	Description     string `json:"description"`
-	// 	DurationMinutes int  `json:"duration_minutes"`
-	// 	PosterImageUrl  string `json:"poster_image_url"`
-	// 	TrailerVideoUrl string `json:"trailer_video_url"`
-	// }
-
 	token, err := auth.GetBearerToken(r.Header)
     if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
@@ -64,14 +56,6 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 		respondWithError(w, http.StatusUnauthorized, "User not authorized", err)
 		return
 	}
-
-	// decoder := json.NewDecoder(r.Body)
-	// params := parameters{}
-	// err = decoder.Decode(&params)
-	// if err != nil {
-	// 	respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
-	// 	return
-	// }
 
 	// Parse the multipart form data
 	err = r.ParseMultipartForm(10 << 20) // 10MB limit in memory

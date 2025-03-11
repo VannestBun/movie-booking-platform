@@ -3,22 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Listing</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Login - Movie Booking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: #4A90E2;
+            outline: none;
+        }
+        
+        .login-button {
+            width: 100%;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .login-button:hover {
+            background-color: #357AE8;
+        }
+        
+        .error-message {
+            background-color: #FFEBEE;
+            color: #D32F2F;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        /* .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .signup-link a {
+            color: #4A90E2;
+            text-decoration: none;
+        }
+        
+        .signup-link a:hover {
+            text-decoration: underline;
+        } */
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Movie Listings</h1>
-        </header>
+    <div class="login-container">
+        <div class="logo">
+            <h1>Movie Booking</h1>
+        </div>
         
-        <div id="loading">Loading movies...</div>
+        <div id="errorMessage" class="error-message"></div>
         
-        <div id="error" class="error-message"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="login-button">Log In</button>
+        </form>
         
-        <div id="movies-container" class="movies-grid"></div>
+        <!-- <div class="signup-link">
+            Don't have an account? <a href="./createMovie/">Sign Up</a>
+        </div> -->
     </div>
-    
-    <script src="script.js"></script>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('errorMessage');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    localStorage.setItem('token', data.token);
+
+                    if (data.refresh_token) {
+                        localStorage.setItem('refreshToken', data.refresh_token);
+                    }
+
+                    // --- if admin, go to the amdin page that can create Movie
+                    if (data.user_role == 'admin') {
+                        window.location.href = '/admin/movies/';
+                    } else {
+                        window.location.href = '/movies/';
+                    }
+
+                } else {
+                    // Handle error responses
+                    const errorData = await response.json();
+                    errorElement.textContent = errorData.error || 'Invalid email or password';
+                    errorElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorElement.textContent = 'Network error. Please try again.';
+                errorElement.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

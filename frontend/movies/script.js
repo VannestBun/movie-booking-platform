@@ -8,6 +8,7 @@ const API_URL = '/api/movies';
 
 // Fetch movies from the API
 async function fetchMovies() {
+    protectRoute()
     try {
         const response = await fetch(API_URL);
         
@@ -48,22 +49,24 @@ function createMovieCard(movie) {
     }
     
     // Format release date if available
-    let releaseDate = movie.release_date ? new Date(movie.release_date).toLocaleDateString() : 'Unknown';
+    let releaseDate = movie.created_at ? new Date(movie.created_at).toLocaleDateString() : 'Unknown';
     
     movieCard.innerHTML = `
-        ${imageContent}
-        <div class="movie-details">
-            <div class="movie-title">${movie.title}</div>
-            <div class="movie-info">
-                <strong>Director:</strong> ${movie.director || 'Unknown'}
-            </div>
-            <div class="movie-info">
-                <strong>Release Date:</strong> ${releaseDate}
-            </div>
-            <div class="movie-info">
-                <strong>Duration:</strong> ${movie.duration || 'Unknown'} min
-            </div>
-        </div>
+        <a href="movie.html?id=${movie.id}">
+            ${imageContent}
+                <div class="movie-details">
+                    <div class="movie-title">${movie.title}</div>
+                    <div class="movie-info">
+                        <strong>Director:</strong> ${movie.director || 'Mel Gibson'}
+                    </div>
+                    <div class="movie-info">
+                        <strong>Release Date:</strong> ${releaseDate}
+                    </div>
+                    <div class="movie-info">
+                        <strong>Duration:</strong> ${movie.duration_minutes || 'Unknown'} min
+                    </div>
+                </div>
+        </a>
     `;
     
     return movieCard;
