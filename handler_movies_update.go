@@ -20,11 +20,7 @@ func (cfg *apiConfig) handlerMoviesUpdate(w http.ResponseWriter, r *http.Request
 
 	currentMovie, err := cfg.db.GetMovie(r.Context(), movieID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Movie not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Failed to fetch current movie", http.StatusInternalServerError)
+		respondWithError(w, http.StatusBadRequest, "Movie not found", err)
 		return
 	}
 
@@ -36,7 +32,7 @@ func (cfg *apiConfig) handlerMoviesUpdate(w http.ResponseWriter, r *http.Request
 		TrailerVideoUrl string `json:"trailer_video_url,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
-		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
 
