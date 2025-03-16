@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createMovie = `-- name: CreateMovie :one
@@ -20,7 +21,11 @@ INSERT INTO movies (
     description,
     duration_minutes,
     poster_image_url,
-    trailer_video_url
+    trailer_video_url,
+    rating,
+    genre,
+    director,
+    casts
 ) VALUES (
     gen_random_uuid(),
     NOW(),
@@ -29,9 +34,13 @@ INSERT INTO movies (
     $2,  -- description
     $3,  -- duration_minutes
     $4,  -- poster_image_url
-    $5   -- trailer_video_url
+    $5,   -- trailer_video_url
+    $6,
+    $7,
+    $8,
+    $9
 )
-RETURNING id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url
+RETURNING id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url, rating, genre, director, casts
 `
 
 type CreateMovieParams struct {
@@ -40,6 +49,10 @@ type CreateMovieParams struct {
 	DurationMinutes int32
 	PosterImageUrl  string
 	TrailerVideoUrl string
+	Rating          string
+	Genre           string
+	Director        string
+	Casts           []string
 }
 
 func (q *Queries) CreateMovie(ctx context.Context, arg CreateMovieParams) (Movie, error) {
@@ -49,6 +62,10 @@ func (q *Queries) CreateMovie(ctx context.Context, arg CreateMovieParams) (Movie
 		arg.DurationMinutes,
 		arg.PosterImageUrl,
 		arg.TrailerVideoUrl,
+		arg.Rating,
+		arg.Genre,
+		arg.Director,
+		pq.Array(arg.Casts),
 	)
 	var i Movie
 	err := row.Scan(
@@ -60,6 +77,10 @@ func (q *Queries) CreateMovie(ctx context.Context, arg CreateMovieParams) (Movie
 		&i.DurationMinutes,
 		&i.PosterImageUrl,
 		&i.TrailerVideoUrl,
+		&i.Rating,
+		&i.Genre,
+		&i.Director,
+		pq.Array(&i.Casts),
 	)
 	return i, err
 }
@@ -75,7 +96,7 @@ func (q *Queries) DeleteMovie(ctx context.Context, id uuid.UUID) error {
 }
 
 const getMovie = `-- name: GetMovie :one
-Select id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url
+Select id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url, rating, genre, director, casts
 FROM movies
 WHERE id = $1
 `
@@ -92,12 +113,16 @@ func (q *Queries) GetMovie(ctx context.Context, id uuid.UUID) (Movie, error) {
 		&i.DurationMinutes,
 		&i.PosterImageUrl,
 		&i.TrailerVideoUrl,
+		&i.Rating,
+		&i.Genre,
+		&i.Director,
+		pq.Array(&i.Casts),
 	)
 	return i, err
 }
 
 const getMovies = `-- name: GetMovies :many
-SELECT id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url FROM movies
+SELECT id, created_at, updated_at, title, description, duration_minutes, poster_image_url, trailer_video_url, rating, genre, director, casts FROM movies
 ORDER BY title ASC
 `
 
@@ -119,6 +144,10 @@ func (q *Queries) GetMovies(ctx context.Context) ([]Movie, error) {
 			&i.DurationMinutes,
 			&i.PosterImageUrl,
 			&i.TrailerVideoUrl,
+			&i.Rating,
+			&i.Genre,
+			&i.Director,
+			pq.Array(&i.Casts),
 		); err != nil {
 			return nil, err
 		}

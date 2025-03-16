@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 	"github.com/vannestbun/movie-booking/internal/database"
 )
 
@@ -71,6 +72,13 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	})
+
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 
 	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
@@ -85,7 +93,12 @@ func main() {
 	mux.HandleFunc("PUT /api/movies/{movieID}", apiCfg.handlerMoviesUpdate)
 	mux.HandleFunc("DELETE /api/movies/{movieID}", apiCfg.handlerMoviesDelete)
 
+	mux.HandleFunc("GET /api/showtimes/{showtimeID}", apiCfg.handlerShowtimeCreate)
+
 	mux.HandleFunc("POST /api/bookings", apiCfg.handlerBookingsCreate)
+
+	mux.HandleFunc("GET /api/booking-seats/{movieID}/{startTime}", apiCfg.handlerBookedSeatsGet)
+	mux.HandleFunc("POST /api/booking-seats", apiCfg.handlerBookedSeatsCreate)
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
@@ -97,7 +110,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: mux,
+		Handler: c.Handler(mux),
 	}
 
 	log.Printf("Serving on port: %s\n", port)

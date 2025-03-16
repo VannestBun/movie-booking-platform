@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/rand"
-	// "encoding/json"
+	"strings"
 	"fmt"
 	"io"
 	"mime"
@@ -28,6 +28,10 @@ type Movie struct {
 	DurationMinutes int32     `json:"duration_minutes"`
 	PosterImageUrl  string    `json:"poster_image_url"`
 	TrailerVideoUrl string    `json:"trailer_video_url"`
+	Rating          string    `json:"rating"`
+	Genre           string    `json:"genre"`
+	Director        string    `json:"director"`
+	Casts           []string  `json:"casts"`
 }
 
 func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request) {
@@ -35,10 +39,10 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 	r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB limit for images
 
 	token, err := auth.GetBearerToken(r.Header)
-    if err != nil {
+	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
-    }
+	}
 
 	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
@@ -59,10 +63,10 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 
 	// Parse the multipart form data
 	err = r.ParseMultipartForm(10 << 20) // 10MB limit in memory
-    if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Couldn't parse form", err)
-        return
-    }
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Couldn't parse form", err)
+		return
+	}
 
 	// Extract form fields
 	title := r.FormValue("title")
@@ -72,6 +76,16 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 		respondWithError(w, http.StatusBadRequest, "Invalid duration", err)
 		return
 	}
+	rating := r.FormValue("rating")
+	genre := r.FormValue("genre")
+	director := r.FormValue("director")
+	castsInput := r.FormValue("casts")
+	casts := strings.Split(castsInput, ",")
+	// Trim whitespace from each name
+	for i := range casts {
+		casts[i] = strings.TrimSpace(casts[i])
+	}
+
 	// Convert int to int32
 	durationMinutes := int32(durationMinutesInt)
 
@@ -87,7 +101,7 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 	}
 	defer file.Close()
 
-    // Validate that it's an image file
+	// Validate that it's an image file
 	mediaType, _, err := mime.ParseMediaType(header.Header.Get("Content-Type"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid Content-Type", err)
@@ -149,9 +163,8 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 	}
 
 	// Construct the S3 URL
-	posterImageUrl = fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", 
-	cfg.s3Bucket, cfg.s3Region, fileKey)
-	
+	posterImageUrl = fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s",
+		cfg.s3Bucket, cfg.s3Region, fileKey)
 
 	movie, err := cfg.db.CreateMovie(r.Context(), database.CreateMovieParams{
 		Title:           title,
@@ -159,11 +172,30 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 		DurationMinutes: durationMinutes,
 		PosterImageUrl:  posterImageUrl,
 		TrailerVideoUrl: trailerVideoUrl,
+		Rating:          rating,
+		Genre:           genre,
+		Director:        director,
+		Casts:           casts,
 	})
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create movie", err)
 		return
+	}
+
+	showtimes := []string{"10:30", "14:15", "18:00", "21:30"}
+	layout := "15:04" // 24-hour time format
+	
+	for _, timeStr := range showtimes {
+		t, err := time.Parse(layout, timeStr)
+        if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "cannot convert time", err)
+            return
+        }
+		_, err = cfg.db.CreateShowtime(r.Context(), database.CreateShowtimeParams{
+			MovieID: movie.ID,
+			StartTime: t,
+		})
 	}
 
 	respondWithJSON(w, http.StatusCreated, Movie{
@@ -173,5 +205,9 @@ func (cfg *apiConfig) handlerMoviesCreate(w http.ResponseWriter, r *http.Request
 		DurationMinutes: movie.DurationMinutes,
 		PosterImageUrl:  movie.PosterImageUrl,
 		TrailerVideoUrl: movie.TrailerVideoUrl,
+		Rating:          movie.Rating,
+		Genre:           movie.Genre,
+		Director:        movie.Director,
+		Casts:           movie.Casts,
 	})
 }

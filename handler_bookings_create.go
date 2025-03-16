@@ -10,22 +10,20 @@ import (
 )
 
 type Booking struct {
-	ID          string    `json:"id"`
-	UserID      string    `json:"user_id"`
-	MovieID     string    `json:"movie_id"`
-	SeatNumber  string    `json:"seat_number"`
-	BookingTime time.Time `json:"booking_time"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	ShowtimeID uuid.UUID
 }
 
 func (cfg *apiConfig) handlerBookingsCreate(w http.ResponseWriter, r *http.Request) {
 
 	type parameters struct {
-		UserID      uuid.UUID `json:"user_id"`
-		MovieID     uuid.UUID `json:"movie_id"`
-		SeatNumber  string    `json:"seat_number"`
-		BookingTime time.Time `json:"booking_time"`
+		UserID   string   `json:"user_id"`
+		Showtime string   `json:"showtime"`
+		MovieId  string   `json:"movie_id"`
+		SeatCode []string `json:"seat_code"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -35,42 +33,71 @@ func (cfg *apiConfig) handlerBookingsCreate(w http.ResponseWriter, r *http.Reque
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
-
-	// Validate request data
-	if params.UserID == uuid.Nil || params.MovieID == uuid.Nil || params.SeatNumber == "" {
-		respondWithError(w, http.StatusBadRequest, "Missing required fields", err)
+	userID, err := uuid.Parse(params.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid user_id format", err)
 		return
 	}
 
-	user, err := cfg.db.GetUser(r.Context(), params.UserID)
+	user, err := cfg.db.GetUser(r.Context(), userID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "User not found", err)
 		return
 	}
 
-	movie, err := cfg.db.GetMovie(r.Context(), params.MovieID)
+	// Don't forget AUTH USING THE TOKENS
+
+	movieID, err := uuid.Parse(params.MovieId)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Movie not found", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid movie_id format", err)
 		return
 	}
 
-	// Check if seat is available
+	startTime, err := time.Parse("3:04 PM", params.Showtime)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't parse time", err)
+		return
+	}
 
-	// ---????----
+	showtime, err := cfg.db.GetShowtimeByMovieAndStartTime(r.Context(), database.GetShowtimeByMovieAndStartTimeParams{
+		MovieID:   movieID,
+		StartTime: startTime,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Showtime not found", err)
+		return
+	}
 
 	booking, err := cfg.db.CreateBooking(r.Context(), database.CreateBookingParams{
-		UserID:      user.ID,
-		MovieID:     movie.ID,
-		SeatNumber:  params.SeatNumber,
-		BookingTime: params.BookingTime,
+		UserID:     user.ID,
+		ShowtimeID: showtime.ID,
 	})
+
+	// this should also automatically booked the approrpiate seats
+	for _, seat_code := range params.SeatCode {
+		_, err := cfg.db.CreateBookingSeat(r.Context(), database.CreateBookingSeatParams{
+			BookingID: booking.ID,
+			SeatCode:  seat_code,
+		})
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "Unable to create booking seat", err)
+			return
+		}
+	}
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create booking", err)
 		return
 	}
+	respondWithJSON(w, http.StatusCreated, Booking{
+		ID:         booking.ID,
+		UserID:     booking.UserID,
+		CreatedAt:  booking.CreatedAt,
+		UpdatedAt:  booking.UpdatedAt,
+		ShowtimeID: booking.ShowtimeID,
+	})
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(booking)
 }
+
+// so first you check the auth
+// POST req with params of showtimeID, make booking, then post sseat with this newly made booking id

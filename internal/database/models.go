@@ -12,13 +12,17 @@ import (
 )
 
 type Booking struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	MovieID     uuid.UUID
-	BookingTime time.Time
-	SeatNumber  string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	ShowtimeID uuid.UUID
+}
+
+type BookingSeat struct {
+	ID        uuid.UUID
+	BookingID uuid.UUID
+	SeatCode  string
 }
 
 type Movie struct {
@@ -30,6 +34,10 @@ type Movie struct {
 	DurationMinutes int32
 	PosterImageUrl  string
 	TrailerVideoUrl string
+	Rating          string
+	Genre           string
+	Director        string
+	Casts           []string
 }
 
 type RefreshToken struct {
@@ -39,6 +47,12 @@ type RefreshToken struct {
 	UserID    uuid.UUID
 	ExpiresAt time.Time
 	RevokedAt sql.NullTime
+}
+
+type Showtime struct {
+	ID        uuid.UUID
+	MovieID   uuid.UUID
+	StartTime time.Time
 }
 
 type User struct {

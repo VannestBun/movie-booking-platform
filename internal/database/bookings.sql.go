@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -16,46 +15,33 @@ const createBooking = `-- name: CreateBooking :one
 INSERT INTO bookings (
   id, 
   user_id, 
-  movie_id, 
-  seat_number, 
-  booking_time, 
+  showtime_id, 
   created_at, 
   updated_at
 ) VALUES (
   gen_random_uuid(), 
   $1, 
-  $2, 
-  $3, 
-  $4, 
+  $2,
   NOW(), 
   NOW()
 )
-RETURNING id, user_id, movie_id, booking_time, seat_number, created_at, updated_at
+RETURNING id, user_id, created_at, updated_at, showtime_id
 `
 
 type CreateBookingParams struct {
-	UserID      uuid.UUID
-	MovieID     uuid.UUID
-	SeatNumber  string
-	BookingTime time.Time
+	UserID     uuid.UUID
+	ShowtimeID uuid.UUID
 }
 
 func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error) {
-	row := q.db.QueryRowContext(ctx, createBooking,
-		arg.UserID,
-		arg.MovieID,
-		arg.SeatNumber,
-		arg.BookingTime,
-	)
+	row := q.db.QueryRowContext(ctx, createBooking, arg.UserID, arg.ShowtimeID)
 	var i Booking
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.MovieID,
-		&i.BookingTime,
-		&i.SeatNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ShowtimeID,
 	)
 	return i, err
 }

@@ -14,6 +14,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/rs/cors v1.11.1
 )
 
 require (

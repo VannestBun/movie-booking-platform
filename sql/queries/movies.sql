@@ -7,7 +7,11 @@ INSERT INTO movies (
     description,
     duration_minutes,
     poster_image_url,
-    trailer_video_url
+    trailer_video_url,
+    rating,
+    genre,
+    director,
+    casts
 ) VALUES (
     gen_random_uuid(),
     NOW(),
@@ -16,7 +20,11 @@ INSERT INTO movies (
     $2,  -- description
     $3,  -- duration_minutes
     $4,  -- poster_image_url
-    $5   -- trailer_video_url
+    $5,   -- trailer_video_url
+    $6,
+    $7,
+    $8,
+    $9
 )
 RETURNING *;
 

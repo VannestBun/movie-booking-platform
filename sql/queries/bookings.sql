@@ -2,17 +2,13 @@
 INSERT INTO bookings (
   id, 
   user_id, 
-  movie_id, 
-  seat_number, 
-  booking_time, 
+  showtime_id, 
   created_at, 
   updated_at
 ) VALUES (
   gen_random_uuid(), 
   $1, 
-  $2, 
-  $3, 
-  $4, 
+  $2,
   NOW(), 
   NOW()
 )

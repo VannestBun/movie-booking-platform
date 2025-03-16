@@ -60,10 +60,12 @@ function createMovieCard(movie) {
                         <strong>Director:</strong> ${movie.director || 'Mel Gibson'}
                     </div>
                     <div class="movie-info">
-                        <strong>Release Date:</strong> ${releaseDate}
+                        <strong>Release Dated:</strong> ${releaseDate}
                     </div>
                     <div class="movie-info">
                         <strong>Duration:</strong> ${movie.duration_minutes || 'Unknown'} min
+                        <strong>Rating:</strong> ${movie.rating} min
+                        <strong>Genre:</strong> ${movie.genre} min
                     </div>
                 </div>
         </a>

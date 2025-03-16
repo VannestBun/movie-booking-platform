@@ -47,8 +47,8 @@ document.getElementById('createMovieForm').addEventListener('submit', async func
         
         if (response.ok) {
             const data = await response.json();
-            // responseData.textContent = JSON.stringify(data, null, 2);
-            // responseData.className = '';
+            responseData.textContent = JSON.stringify(data, null, 2);
+            responseData.className = '';
             // Reset form on success
             document.getElementById('createMovieForm').reset();
             document.getElementById('imagePreview').style.display = 'none';

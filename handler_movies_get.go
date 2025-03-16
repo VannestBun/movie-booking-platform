@@ -29,6 +29,10 @@ func (cfg *apiConfig) handlerMoviesGet(w http.ResponseWriter, r *http.Request) {
 		DurationMinutes: dbMovie.DurationMinutes,
 		PosterImageUrl:  dbMovie.PosterImageUrl,
 		TrailerVideoUrl: dbMovie.TrailerVideoUrl,
+		Rating:          dbMovie.Rating,
+		Genre:           dbMovie.Genre,
+		Director:        dbMovie.Director,
+		Casts:           dbMovie.Casts,
 	})
 }
 
@@ -50,8 +54,12 @@ func (cfg *apiConfig) handlerMoviesRetrieve(w http.ResponseWriter, r *http.Reque
 			DurationMinutes: dbMovie.DurationMinutes,
 			PosterImageUrl:  dbMovie.PosterImageUrl,
 			TrailerVideoUrl: dbMovie.TrailerVideoUrl,
+			Rating:          dbMovie.Rating,
+			Genre:           dbMovie.Genre,
+			Director:        dbMovie.Director,
+			Casts:           dbMovie.Casts,
 		})
 	}
-	
+
 	respondWithJSON(w, http.StatusOK, movies)
 }
