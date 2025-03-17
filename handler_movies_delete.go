@@ -21,3 +21,4 @@ func (cfg *apiConfig) handlerMoviesDelete(w http.ResponseWriter, r *http.Request
 	
 	w.WriteHeader(http.StatusNoContent)
 }
+

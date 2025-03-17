@@ -13,3 +13,7 @@ INSERT INTO bookings (
   NOW()
 )
 RETURNING *;
+
+-- name: DeleteBooking :exec
+DELETE FROM bookings
+WHERE id = $1;

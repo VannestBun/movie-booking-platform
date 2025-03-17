@@ -86,6 +86,7 @@ func main() {
 	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
 
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
+	mux.HandleFunc("GET /api/users/{userID}", apiCfg.handlerUserBookings)
 
 	mux.HandleFunc("POST /api/movies", apiCfg.handlerMoviesCreate)
 	mux.HandleFunc("GET /api/movies", apiCfg.handlerMoviesRetrieve)
@@ -96,6 +97,7 @@ func main() {
 	mux.HandleFunc("GET /api/showtimes/{showtimeID}", apiCfg.handlerShowtimeCreate)
 
 	mux.HandleFunc("POST /api/bookings", apiCfg.handlerBookingsCreate)
+	mux.HandleFunc("DELETE /api/bookings/{bookingID}", apiCfg.handlerBookingsDelete)
 
 	mux.HandleFunc("GET /api/booking-seats/{movieID}/{startTime}", apiCfg.handlerBookedSeatsGet)
 	mux.HandleFunc("POST /api/booking-seats", apiCfg.handlerBookedSeatsCreate)

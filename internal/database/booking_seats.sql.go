@@ -34,6 +34,16 @@ func (q *Queries) CreateBookingSeat(ctx context.Context, arg CreateBookingSeatPa
 	return i, err
 }
 
+const deleteSeats = `-- name: DeleteSeats :exec
+DELETE FROM booking_seats
+WHERE booking_id = $1
+`
+
+func (q *Queries) DeleteSeats(ctx context.Context, bookingID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteSeats, bookingID)
+	return err
+}
+
 const getBookedSeats = `-- name: GetBookedSeats :many
 SELECT seat_code
 FROM booking_seats
@@ -49,6 +59,35 @@ type GetBookedSeatsParams struct {
 
 func (q *Queries) GetBookedSeats(ctx context.Context, arg GetBookedSeatsParams) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, getBookedSeats, arg.StartTime, arg.MovieID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var seat_code string
+		if err := rows.Scan(&seat_code); err != nil {
+			return nil, err
+		}
+		items = append(items, seat_code)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getBookedSeatsByBookingID = `-- name: GetBookedSeatsByBookingID :many
+SELECT seat_code
+FROM booking_seats
+WHERE booking_id = $1
+`
+
+func (q *Queries) GetBookedSeatsByBookingID(ctx context.Context, bookingID uuid.UUID) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getBookedSeatsByBookingID, bookingID)
 	if err != nil {
 		return nil, err
 	}

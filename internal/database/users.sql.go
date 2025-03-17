@@ -7,8 +7,10 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -60,6 +62,78 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.HashedPassword,
 	)
 	return i, err
+}
+
+const getUserBookingInfo = `-- name: GetUserBookingInfo :many
+SELECT 
+    users.email,
+    showtimes.start_time, 
+    movies.title, 
+    movies.description,
+    movies.duration_minutes,
+    movies.poster_image_url,
+    movies.trailer_video_url,
+    movies.rating,
+    movies.genre,
+    movies.director,
+    movies.casts,
+    bookings.id as booking_id
+FROM users
+LEFT JOIN bookings ON users.id = bookings.user_id
+LEFT JOIN showtimes ON bookings.showtime_id = showtimes.id
+LEFT JOIN movies ON showtimes.movie_id = movies.id
+WHERE users.id = $1
+`
+
+type GetUserBookingInfoRow struct {
+	Email           string
+	StartTime       sql.NullTime
+	Title           sql.NullString
+	Description     sql.NullString
+	DurationMinutes sql.NullInt32
+	PosterImageUrl  sql.NullString
+	TrailerVideoUrl sql.NullString
+	Rating          sql.NullString
+	Genre           sql.NullString
+	Director        sql.NullString
+	Casts           []string
+	BookingID       uuid.NullUUID
+}
+
+func (q *Queries) GetUserBookingInfo(ctx context.Context, id uuid.UUID) ([]GetUserBookingInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserBookingInfo, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserBookingInfoRow
+	for rows.Next() {
+		var i GetUserBookingInfoRow
+		if err := rows.Scan(
+			&i.Email,
+			&i.StartTime,
+			&i.Title,
+			&i.Description,
+			&i.DurationMinutes,
+			&i.PosterImageUrl,
+			&i.TrailerVideoUrl,
+			&i.Rating,
+			&i.Genre,
+			&i.Director,
+			pq.Array(&i.Casts),
+			&i.BookingID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
