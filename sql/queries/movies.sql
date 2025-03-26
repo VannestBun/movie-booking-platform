@@ -43,5 +43,13 @@ WHERE id = $1;
 
 -- name: UpdateMovie :exec
 UPDATE movies
-SET title = $1, description = $2, duration_minutes = $3, poster_image_url = $4, trailer_video_url = $5
-WHERE id = $6;
+SET title = $1, 
+    description = $2, 
+    duration_minutes = $3, 
+    poster_image_url = $4, 
+    trailer_video_url = $5, 
+    rating = $6, 
+    genre = $7,
+    director = $8,
+    casts = $9
+WHERE id = $10;

@@ -34,6 +34,15 @@ func (q *Queries) CreateShowtime(ctx context.Context, arg CreateShowtimeParams) 
 	return i, err
 }
 
+const deleteShowtime = `-- name: DeleteShowtime :exec
+DELETE FROM showtimes WHERE movie_id = $1
+`
+
+func (q *Queries) DeleteShowtime(ctx context.Context, movieID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteShowtime, movieID)
+	return err
+}
+
 const getShowtime = `-- name: GetShowtime :one
 SELECT id, movie_id, start_time FROM showtimes WHERE id = $1
 `

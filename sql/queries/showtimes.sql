@@ -15,3 +15,6 @@ SELECT * FROM showtimes WHERE movie_id = $1;
 
 -- name: GetShowtimeByMovieAndStartTime :one
 SELECT * FROM showtimes WHERE movie_id = $1 AND start_time = $2;
+
+-- name: DeleteShowtime :exec
+DELETE FROM showtimes WHERE movie_id = $1;

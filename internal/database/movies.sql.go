@@ -164,8 +164,16 @@ func (q *Queries) GetMovies(ctx context.Context) ([]Movie, error) {
 
 const updateMovie = `-- name: UpdateMovie :exec
 UPDATE movies
-SET title = $1, description = $2, duration_minutes = $3, poster_image_url = $4, trailer_video_url = $5
-WHERE id = $6
+SET title = $1, 
+    description = $2, 
+    duration_minutes = $3, 
+    poster_image_url = $4, 
+    trailer_video_url = $5, 
+    rating = $6, 
+    genre = $7,
+    director = $8,
+    casts = $9
+WHERE id = $10
 `
 
 type UpdateMovieParams struct {
@@ -174,6 +182,10 @@ type UpdateMovieParams struct {
 	DurationMinutes int32
 	PosterImageUrl  string
 	TrailerVideoUrl string
+	Rating          string
+	Genre           string
+	Director        string
+	Casts           []string
 	ID              uuid.UUID
 }
 
@@ -184,6 +196,10 @@ func (q *Queries) UpdateMovie(ctx context.Context, arg UpdateMovieParams) error 
 		arg.DurationMinutes,
 		arg.PosterImageUrl,
 		arg.TrailerVideoUrl,
+		arg.Rating,
+		arg.Genre,
+		arg.Director,
+		pq.Array(arg.Casts),
 		arg.ID,
 	)
 	return err
